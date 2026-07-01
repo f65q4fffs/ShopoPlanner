@@ -21,6 +21,9 @@ const tollCostInput = document.getElementById('toll-cost');
 const vehicleNameInput = document.getElementById('vehicle-name');
 const vehicleCrkInput = document.getElementById('vehicle-crk');
 const headerVehicleBadge = document.getElementById('header-vehicle-badge');
+const vehicleConsumptionInput = document.getElementById('vehicle-consumption');
+const fuelPriceInput = document.getElementById('fuel-price');
+const vehicleExtraCostsInput = document.getElementById('vehicle-extra-costs');
 const fileInput = document.getElementById('file-input');
 const dropzone = document.getElementById('dropzone');
 const previewBox = document.getElementById('preview-box');
@@ -106,14 +109,22 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('shopoplanner_client_time', clientServiceTimeInput.value);
   });
 
-  // Chargement du véhicule et CRK
+  // Chargement du véhicule et du calculateur de CRK
   const savedVehicleName = localStorage.getItem('shopoplanner_vehicle_name');
   if (savedVehicleName) {
     vehicleNameInput.value = savedVehicleName;
   }
-  const savedVehicleCrk = localStorage.getItem('shopoplanner_vehicle_crk');
-  if (savedVehicleCrk) {
-    vehicleCrkInput.value = savedVehicleCrk;
+  const savedConsumption = localStorage.getItem('shopoplanner_vehicle_consumption');
+  if (savedConsumption) {
+    vehicleConsumptionInput.value = savedConsumption;
+  }
+  const savedFuelPrice = localStorage.getItem('shopoplanner_fuel_price');
+  if (savedFuelPrice) {
+    fuelPriceInput.value = savedFuelPrice;
+  }
+  const savedExtraCosts = localStorage.getItem('shopoplanner_vehicle_extra_costs');
+  if (savedExtraCosts) {
+    vehicleExtraCostsInput.value = savedExtraCosts;
   }
 
   function updateHeaderVehicle() {
@@ -122,17 +133,38 @@ document.addEventListener('DOMContentLoaded', () => {
     headerVehicleBadge.textContent = `${name} (CRK : ${crk.toFixed(2)} €/km)`;
   }
 
+  function recalculateCrk() {
+    const consumption = parseFloat(vehicleConsumptionInput.value) || 0;
+    const price = parseFloat(fuelPriceInput.value) || 0;
+    const extra = parseFloat(vehicleExtraCostsInput.value) || 0;
+    const crk = (consumption * price / 100) + extra;
+    vehicleCrkInput.value = crk.toFixed(2);
+    localStorage.setItem('shopoplanner_vehicle_crk', vehicleCrkInput.value);
+    updateHeaderVehicle();
+  }
+
   vehicleNameInput.addEventListener('input', () => {
     localStorage.setItem('shopoplanner_vehicle_name', vehicleNameInput.value.trim());
     updateHeaderVehicle();
   });
 
-  vehicleCrkInput.addEventListener('input', () => {
-    localStorage.setItem('shopoplanner_vehicle_crk', vehicleCrkInput.value);
-    updateHeaderVehicle();
+  vehicleConsumptionInput.addEventListener('input', () => {
+    localStorage.setItem('shopoplanner_vehicle_consumption', vehicleConsumptionInput.value);
+    recalculateCrk();
   });
 
-  updateHeaderVehicle();
+  fuelPriceInput.addEventListener('input', () => {
+    localStorage.setItem('shopoplanner_fuel_price', fuelPriceInput.value);
+    recalculateCrk();
+  });
+
+  vehicleExtraCostsInput.addEventListener('input', () => {
+    localStorage.setItem('shopoplanner_vehicle_extra_costs', vehicleExtraCostsInput.value);
+    recalculateCrk();
+  });
+
+  // Calcul initial du CRK au démarrage
+  recalculateCrk();
 
   const savedTollPref = localStorage.getItem('shopoplanner_toll_preference');
   if (savedTollPref) {

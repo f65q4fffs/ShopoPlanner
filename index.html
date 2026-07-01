@@ -53,7 +53,7 @@
       </div>
 
       <!-- Véhicule & Frais kilométriques -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
         <div class="form-group" style="margin-bottom: 0;">
           <label for="vehicle-name">Modèle de véhicule :</label>
           <div class="input-with-icon">
@@ -65,10 +65,32 @@
           <label for="vehicle-crk">Coût de revient (CRK €/km) :</label>
           <div class="input-with-icon">
             <i data-lucide="coins" class="input-icon"></i>
-            <input type="number" id="vehicle-crk" placeholder="Ex: 0.25" step="0.01" min="0" value="0.25">
+            <input type="number" id="vehicle-crk" placeholder="Calculé..." step="0.01" min="0" value="0.25" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
           </div>
         </div>
       </div>
+
+      <!-- Calculateur avancé dépliable (Caché par défaut) -->
+      <details class="advanced-crk-details" style="margin-bottom: 14px; font-size: 13px;">
+        <summary style="cursor: pointer; color: var(--primary-color); font-weight: 500; display: flex; align-items: center; gap: 4px; outline: none; user-select: none;">
+          <i data-lucide="calculator" style="width: 14px; height: 14px;"></i> Calculateur de frais (Consommation & Carburant)
+        </summary>
+        <div style="padding: 10px; background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="vehicle-consumption" style="font-size: 11px;">Consommation (L/100km) :</label>
+            <input type="number" id="vehicle-consumption" placeholder="Ex: 6.0" step="0.1" min="0" value="6.0" style="padding: 6px 10px; font-size: 13px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="fuel-price" style="font-size: 11px;">Prix carburant (€/L) :</label>
+            <input type="number" id="fuel-price" placeholder="Ex: 1.85" step="0.01" min="0" value="1.85" style="padding: 6px 10px; font-size: 13px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          </div>
+          <div class="form-group" style="margin-bottom: 0; grid-column: span 2;">
+            <label for="vehicle-extra-costs" style="font-size: 11px;">Frais annexes (assurance, pneus, entretien €/km) :</label>
+            <input type="number" id="vehicle-extra-costs" placeholder="Ex: 0.15" step="0.01" min="0" value="0.15" style="padding: 6px 10px; font-size: 13px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">Estimé par défaut à 0.15 €/km pour couvrir l'assurance et l'entretien moyen.</p>
+          </div>
+        </div>
+      </details>
 
       <!-- Heure de départ -->
       <div class="form-group">
