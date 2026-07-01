@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ShopoPlanner - Optimiseur de Tournées</title>
+  <meta name="description" content="Optimiseur de tournées de co-transportage gratuit.">
+  
+  <!-- Polices Premium -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Icônes Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Cartographie Leaflet -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- En-tête -->
+    <header class="app-header">
+      <div class="logo-area">
+        <i data-lucide="route" class="logo-icon"></i>
+        <h1>ShopoPlanner</h1>
+      </div>
+      <p class="subtitle">Optimiseur de livraison Shopopop</p>
+      
+      <!-- Infos véhicule -->
+      <div class="info-badge">
+        <i data-lucide="car"></i>
+        <span id="header-vehicle-badge">BMW E90 Diesel (CRK : 0.25 €/km)</span>
+      </div>
+    </header>
+
+    <!-- Point de départ & Clé API -->
+    <section class="card settings-card">
+      <h2><i data-lucide="sliders"></i> Paramètres de la tournée</h2>
+      
+      <!-- Point de départ modifiable -->
+      <div class="form-group">
+        <label for="start-address">Adresse de départ & d'arrivée :</label>
+        <div class="input-with-icon">
+          <i data-lucide="map-pin" class="input-icon"></i>
+          <input type="text" id="start-address" placeholder="Ex: 10 Rue de la République, Lyon" value="Lyon, France">
+        </div>
+      </div>
+
+      <!-- Véhicule & Frais kilométriques -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="vehicle-name">Modèle de véhicule :</label>
+          <div class="input-with-icon">
+            <i data-lucide="car" class="input-icon"></i>
+            <input type="text" id="vehicle-name" placeholder="Ex: BMW E90 Diesel" value="BMW E90 Diesel">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="vehicle-crk">Coût de revient (CRK €/km) :</label>
+          <div class="input-with-icon">
+            <i data-lucide="coins" class="input-icon"></i>
+            <input type="number" id="vehicle-crk" placeholder="Ex: 0.25" step="0.01" min="0" value="0.25">
+          </div>
+        </div>
+      </div>
+
+      <!-- Heure de départ -->
+      <div class="form-group">
+        <label for="start-time">Heure de départ de chez vous :</label>
+        <div class="input-with-icon">
+          <i data-lucide="clock" class="input-icon"></i>
+          <input type="time" id="start-time">
+        </div>
+      </div>
+
+      <!-- Temps de service configurables -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+        <div class="form-group">
+          <label for="shop-service-time">Retrait Magasin (min) :</label>
+          <div class="input-with-icon">
+            <i data-lucide="package-open" class="input-icon"></i>
+            <input type="number" id="shop-service-time" value="5" min="0" max="60">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="client-service-time">Dépose Client (min) :</label>
+          <div class="input-with-icon">
+            <i data-lucide="home" class="input-icon"></i>
+            <input type="number" id="client-service-time" value="5" min="0" max="60">
+          </div>
+        </div>
+      </div>
+
+      <!-- Option autoroute & péage -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+        <div class="form-group">
+          <label for="toll-preference">Option Autoroute :</label>
+          <div class="input-with-icon">
+            <i data-lucide="navigation" class="input-icon"></i>
+            <select id="toll-preference">
+              <option value="free" selected>Trajet gratuit (sans péage)</option>
+              <option value="toll">Autoroute à péage</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" id="toll-cost-group" style="display: none;">
+          <label for="toll-cost">Frais de péage (€) :</label>
+          <div class="input-with-icon">
+            <i data-lucide="coins" class="input-icon"></i>
+            <input type="number" id="toll-cost" value="0.00" min="0" step="0.1" placeholder="0.00">
+          </div>
+        </div>
+      </div>
+
+      <!-- Clé API Gemini -->
+      <div class="form-group">
+        <div class="label-with-help">
+          <label for="gemini-key">Clé API Gemini (Gratuite) :</label>
+          <button type="button" class="btn-help" id="btn-open-help" title="Comment obtenir une clé gratuite ?">
+            <i data-lucide="help-circle"></i> Comment faire ?
+          </button>
+        </div>
+        <div class="input-with-icon">
+          <i data-lucide="key-round" class="input-icon"></i>
+          <input type="password" id="gemini-key" placeholder="Collez votre clé API Gemini ici..." autocomplete="off">
+        </div>
+        <p class="help-text">La clé est enregistrée localement dans votre téléphone.</p>
+      </div>
+
+      <!-- Modèle Gemini -->
+      <div class="form-group">
+        <label for="gemini-model">Modèle d'IA Gemini :</label>
+        <div class="input-with-icon">
+          <i data-lucide="cpu" class="input-icon"></i>
+          <select id="gemini-model">
+            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Recommandé)</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ancien)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sélection des captures d'écran -->
+    <section class="card upload-card">
+      <h2><i data-lucide="image"></i> Offres Shopopop (Images ou Vidéo)</h2>
+      <p class="section-desc">Importez des captures d'écran OU un enregistrement d'écran vidéo (5 à 10s max).</p>
+      
+      <label for="file-input" class="upload-dropzone" id="dropzone">
+        <input type="file" id="file-input" multiple accept="image/*,video/*" class="file-input-hidden">
+        <i data-lucide="upload-cloud" class="upload-big-icon"></i>
+        <span class="upload-text-main">Choisir des images ou une vidéo</span>
+        <span class="upload-text-sub">Touchez ici pour ouvrir la galerie / fichiers</span>
+      </label>
+
+      <!-- Aperçu des fichiers chargés -->
+      <div class="preview-box hidden" id="preview-box">
+        <h3>Fichiers prêts à l'analyse (<span id="preview-count">0</span>)</h3>
+        <div class="preview-thumbnails" id="preview-thumbnails"></div>
+      </div>
+
+      <button id="btn-optimize" class="btn btn-primary btn-block" disabled>
+        <i data-lucide="sparkles"></i> Calculer la tournée optimale
+      </button>
+    </section>
+
+    <!-- Résultats de l'analyse -->
+    <section class="card results-card hidden" id="results-card">
+      <h2><i data-lucide="trending-up"></i> Bilan de Rentabilité</h2>
+      
+      <!-- Résumé Financier -->
+      <div class="financial-summary">
+        <div class="profit-badge" id="net-profit-badge">
+          <span class="profit-label">Gain Net Réel</span>
+          <span class="profit-val" id="net-profit-val">0,00 €</span>
+        </div>
+        
+        <div class="financial-details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Gains bruts Shopopop</span>
+            <span class="detail-val text-success" id="gross-gains-val">0,00 €</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Coût routier estimé</span>
+            <span class="detail-val text-danger" id="road-cost-val">0,00 €</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Distance totale</span>
+            <span class="detail-val" id="distance-val">0,0 km</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Taux horaire net</span>
+            <span class="detail-val text-primary" id="hourly-rate-val">0,00 €/h</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Courses impossibles à réaliser (Masqué par défaut) -->
+      <div class="rejected-courses-container hidden" id="rejected-courses-container">
+        <div class="rejected-alert">
+          <div class="rejected-alert-header">
+            <i data-lucide="alert-octagon"></i>
+            <h3>Courses impossibles à récupérer (À REFUSER)</h3>
+          </div>
+          <p class="rejected-alert-desc">Les créneaux de retrait de ces courses seront déjà dépassés à votre arrivée. Vous devez les refuser :</p>
+          <ul class="rejected-list" id="rejected-list">
+            <!-- Inséré en JS -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- Carte de la tournée -->
+      <div class="map-section-container">
+        <h3><i data-lucide="map-pinned"></i> Carte de la tournée</h3>
+        <div id="map-view" style="height: 240px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 8px; margin-bottom: 16px; z-index: 1;"></div>
+      </div>
+
+      <!-- Détail étape par étape -->
+      <div class="steps-container">
+        <h3><i data-lucide="map"></i> Étapes de la livraison</h3>
+        <div class="steps-timeline" id="steps-timeline">
+          <!-- Inséré via JavaScript -->
+        </div>
+      </div>
+
+      <!-- Lien d'export Google Maps -->
+      <a href="#" id="btn-google-maps" target="_blank" class="btn btn-success btn-block">
+        <i data-lucide="external-link"></i> Lancer l'itinéraire Google Maps
+      </a>
+    </section>
+
+    <!-- Message de chargement / Statut -->
+    <div class="loading-overlay hidden" id="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p id="loading-text">Analyse des images en cours...</p>
+    </div>
+  </div>
+
+  <!-- Fenêtre Modal d'Aide Clé API -->
+  <div class="modal hidden" id="help-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Obtenir une clé Gemini gratuite</h2>
+        <button class="btn-close-modal" id="btn-close-help">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Pour lire le texte de vos captures d'écran, l'application utilise l'intelligence artificielle de Google. C'est gratuit et cela prend 2 minutes :</p>
+        <ol class="help-steps">
+          <li>Allez sur le site <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio (cliquez ici)</a>.</li>
+          <li>Connectez-vous avec votre compte Google standard.</li>
+          <li>Cliquez sur le bouton bleu <strong>"Get API key"</strong> (Obtenir une clé API) en haut à gauche.</li>
+          <li>Cliquez sur <strong>"Create API key"</strong>, puis choisissez un projet ou créez-en un.</li>
+          <li>Copiez la clé générée (elle commence par <code>AIzaSy...</code>) et collez-la dans la case ci-dessous dans l'application.</li>
+        </ol>
+        <p class="modal-warning"><i data-lucide="shield-alert"></i> <strong>Sécurité :</strong> Votre clé reste sur votre téléphone. Aucun serveur intermédiaire ne la reçoit.</p>
+      </div>
+      <button class="btn btn-secondary btn-block" id="btn-close-help-ok">J'ai compris</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Chargement initial des icônes
+    lucide.createIcons();
+  </script>
+</body>
+</html>
